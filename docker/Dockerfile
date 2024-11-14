@@ -1,0 +1,73 @@
+# ベースイメージ
+FROM ubuntu:22.04
+
+# 環境変数を設定
+# PDF 4.1.1 "Set Locale" に対応（非対話的モードとタイムゾーン設定）
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Tokyo
+
+# 必要なパッケージとロケール設定
+# PDF 4.1.1 "Set Locale" に対応
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y \
+    locales \
+    tzdata \
+    curl \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    sudo \
+    build-essential \
+    wget && \
+    # ロケールをUTF-8に設定
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 && \
+    # タイムゾーンを日本時間に設定
+    ln -fs /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
+# ユーザーを作成
+# PDFには明記されていないが、非rootユーザーを使用するために追加
+ARG USER_NAME=user
+ARG USER_UID=1000
+ARG USER_GID=1000
+RUN groupadd --gid $USER_GID $USER_NAME && \
+    useradd --uid $USER_UID --gid $USER_GID -m $USER_NAME && \
+    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# 作成したユーザーに切り替え
+# PDFには明記なし（Dockerfile特有のセキュリティ対応）
+USER $USER_NAME
+WORKDIR /home/$USER_NAME
+
+# ROS 2 Humbleのセットアップ
+# PDF 4.1.2 "Setup Sources" に対応
+RUN sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2-latest.list > /dev/null && \
+    sudo apt-get update
+
+# PDF 4.1.3 "Install ROS 2 Packages" に対応
+RUN sudo apt-get install -y ros-humble-desktop && \
+    # ROS 2 環境変数を設定
+    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+
+# Gazebo Ignition Fortressのセットアップ
+# PDF 4.1.4 "Install Gazebo Ignition Fortress (Binary)" に対応
+# Gazeboリポジトリを設定
+RUN sudo curl -sSL https://packages.osrfoundation.org/gazebo.key | sudo gpg --dearmor -o /usr/share/keyrings/osrf-gazebo-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/osrf-gazebo-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \
+    sudo apt-get update
+
+# PDF: Gazebo Ignition Fortress のインストール
+RUN sudo apt-get install -y ignition-fortress
+
+# 動作確認用スクリプトを作成
+# PDF 4.1.3 "Verify ROS 2 Installation with Demo Nodes" に対応
+RUN echo "source /opt/ros/humble/setup.bash && ros2 topic list" > /home/$USER_NAME/test_ros.sh && chmod +x /home/$USER_NAME/test_ros.sh
+
+# クリーンアップ
+# PDFには明示的な記載なし（Dockerfileのベストプラクティスとして追加）
+RUN sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+
+# コンテナのデフォルトコマンド
+CMD ["/bin/bash"]
