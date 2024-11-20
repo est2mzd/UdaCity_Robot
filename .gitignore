@@ -1,0 +1,16 @@
+**/build/
+**/backup/
+**/backup_2/
+**/resource/*.zip
+**/Submit/
+.bash_history
+.cache/
+.config/
+.dotnet/
+.gazebo/
+.gitconfig
+.gnupg/
+.ignition/
+.local/
+.sdformat/
+.vscode-server/

@@ -10,12 +10,21 @@ source "$(dirname "$0")/common.sh"
 docker run \
     --rm \
     -itd \
-    -v "$WORK_DIR":/work \
+    -p 8888:8888 \
+    -v "$WORK_DIR":/home/$USER \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    -v /usr/share/glvnd:/usr/share/glvnd:rw \
+    -v /usr/lib/x86_64-linux-gnu/nvidia:/usr/lib/x86_64-linux-gnu/nvidia:rw \
+    --privileged \
     --name "$CONTAINER_NAME" \
-    --workdir /work \
+    --workdir /home/$USER \
     --user $USER_NAME:$USER_NAME \
     --env  USER_NAME=$USER_NAME \
     --env  USER_ID=$USER_ID \
     --env "DISPLAY=$DISPLAY" \
-    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    --device /dev/dri:/dev/dri \
+    --env NVIDIA_DRIVER_CAPABILITIES=all \
+    --env NVIDIA_VISIBLE_DEVICES=all \
+    --device /dev/dri:/dev/dri \
+    --gpus all \
     "$IMAGE_NAME"

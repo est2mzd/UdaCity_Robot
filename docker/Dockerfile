@@ -1,73 +1,106 @@
 # ベースイメージ
-FROM ubuntu:22.04
+FROM osrf/ros:noetic-desktop-full
 
-# 環境変数を設定
-# PDF 4.1.1 "Set Locale" に対応（非対話的モードとタイムゾーン設定）
+# メンテナ情報
+LABEL maintainer="takuya@example.com"
+
+# 非対話型設定
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Asia/Tokyo
 
-# 必要なパッケージとロケール設定
-# PDF 4.1.1 "Set Locale" に対応
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y \
-    locales \
-    tzdata \
-    curl \
-    gnupg \
-    lsb-release \
-    software-properties-common \
-    sudo \
+# 必要なシステムパッケージをインストール
+RUN apt-get update && apt-get install -y \
     build-essential \
-    wget && \
-    # ロケールをUTF-8に設定
-    locale-gen en_US.UTF-8 && \
-    update-locale LANG=en_US.UTF-8 && \
-    # タイムゾーンを日本時間に設定
-    ln -fs /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
-    dpkg-reconfigure --frontend noninteractive tzdata
+    cmake \
+    git \
+    wget \
+    curl \
+    nano \
+    python3-pip \
+    python3-rosdep \
+    python3-rosinstall \
+    python3-rosinstall-generator \
+    python3-wstool \
+    mesa-utils \
+    libgl1-mesa-dri \
+    libglx-mesa0 \
+    libegl-mesa0 \
+    libosmesa6 \
+    x11-apps \
+    sudo \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# ユーザーを作成
-# PDFには明記されていないが、非rootユーザーを使用するために追加
-ARG USER_NAME=user
-ARG USER_UID=1000
-ARG USER_GID=1000
-RUN groupadd --gid $USER_GID $USER_NAME && \
-    useradd --uid $USER_UID --gid $USER_GID -m $USER_NAME && \
+# 必要な追加ツールをインストール
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    libeigen3-dev \
+    libpcl-dev \
+    python3 \
+    python3-pip \
+    && pip3 install --upgrade pip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# OpenCVのインストール
+RUN apt-get update && apt-get install -y \
+    libopencv-dev \
+    python3-opencv \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+# NVIDIAリポジトリを追加
+RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && \
+    curl -s -L https://nvidia.github.io/libnvidia-container/ubuntu20.04/libnvidia-container.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && \
+    apt-get update
+
+# NVIDIA対応のライブラリをインストール
+RUN apt-get update && apt-get install -y \
+    nvidia-container-toolkit \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 環境変数設定
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+
+# ROSデフォルト設定をBashに追加
+RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+
+# Gazebo関連の必要なパッケージをインストール
+RUN apt-get update && apt-get install -y \
+    ros-noetic-gazebo-ros-pkgs \
+    ros-noetic-gazebo-ros-control \
+    ros-noetic-effort-controllers \
+    ros-noetic-joint-state-controller \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Python依存パッケージをインストール
+RUN pip3 install --upgrade pip && \
+    pip3 install \
+    numpy \
+    jupyterlab \
+    notebook && \
+    pip3 install pcg-gazebo --no-deps && \
+    pip3 install \
+    trimesh svg.path colorlog numpy-quaternion
+
+RUN sudo apt-get update && sudo apt-get upgrade -y
+
+# ユーザー情報を設定
+ARG USER_NAME
+ARG USER_ID
+RUN useradd -m -s /bin/bash -u $USER_ID $USER_NAME && \
     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# 作成したユーザーに切り替え
-# PDFには明記なし（Dockerfile特有のセキュリティ対応）
+# 作業ディレクトリ
+WORKDIR /home/$USER_NAME/
+
+# 権限を適切に設定
+RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
+
+# デフォルトのユーザー切り替え
 USER $USER_NAME
-WORKDIR /home/$USER_NAME
 
-# ROS 2 Humbleのセットアップ
-# PDF 4.1.2 "Setup Sources" に対応
-RUN sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2-latest.list > /dev/null && \
-    sudo apt-get update
-
-# PDF 4.1.3 "Install ROS 2 Packages" に対応
-RUN sudo apt-get install -y ros-humble-desktop && \
-    # ROS 2 環境変数を設定
-    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-
-# Gazebo Ignition Fortressのセットアップ
-# PDF 4.1.4 "Install Gazebo Ignition Fortress (Binary)" に対応
-# Gazeboリポジトリを設定
-RUN sudo curl -sSL https://packages.osrfoundation.org/gazebo.key | sudo gpg --dearmor -o /usr/share/keyrings/osrf-gazebo-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/osrf-gazebo-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \
-    sudo apt-get update
-
-# PDF: Gazebo Ignition Fortress のインストール
-RUN sudo apt-get install -y ignition-fortress
-
-# 動作確認用スクリプトを作成
-# PDF 4.1.3 "Verify ROS 2 Installation with Demo Nodes" に対応
-RUN echo "source /opt/ros/humble/setup.bash && ros2 topic list" > /home/$USER_NAME/test_ros.sh && chmod +x /home/$USER_NAME/test_ros.sh
-
-# クリーンアップ
-# PDFには明示的な記載なし（Dockerfileのベストプラクティスとして追加）
-RUN sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
-
-# コンテナのデフォルトコマンド
+# 起動時にBashを実行
 CMD ["/bin/bash"]

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # build.sh に必要な変数
-IMAGE_NAME="udacity_robot_"$USER
+IMAGE_NAME="udacity_robot_ros1_"$USER
+#IMAGE_NAME="udacity_robot_ros2_"$USER
 DOCKERFILE_DIR=$(dirname "$0")
 
 # ホストのユーザー情報
