@@ -102,5 +102,11 @@ RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 # デフォルトのユーザー切り替え
 USER $USER_NAME
 
+# Gazeboに必須. Nvidia Driverを使うようするための設定
+ENV NVIDIA_DRIVER_CAPABILITIES=all
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV __NV_PRIME_RENDER_OFFLOAD=1
+ENV __GLX_VENDOR_LIBRARY_NAME=nvidia
+    
 # 起動時にBashを実行
 CMD ["/bin/bash"]
