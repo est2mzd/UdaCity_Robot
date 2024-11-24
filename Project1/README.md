@@ -107,8 +107,11 @@ World plugin basic requirements:
 • Do not submit the build directory!
 
 ### Results
+I wrote a refference command in UdaCityOffice.world like below.
+
+![script](./images/fig_04_plugin.png)
+
+
 Run ./run_gazebo.sh, then you will see below.
 
-```bash
-Welcome to ’s World!
-```
+![script](./images/fig_05_plugin.png)
