@@ -22,5 +22,5 @@ docker run \
     --env "DISPLAY=$DISPLAY" \
     --device /dev/dri:/dev/dri \
     --runtime nvidia \
-    --gpus all \
+    --gpus '"device=0"' \
     "$IMAGE_NAME"
