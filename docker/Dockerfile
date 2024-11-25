@@ -93,14 +93,18 @@ ARG USER_ID
 RUN useradd -m -s /bin/bash -u $USER_ID $USER_NAME && \
     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# 作業ディレクトリ
-WORKDIR /home/$USER_NAME/
-
 # 権限を適切に設定
 RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 
+# ROSの設定 : これはうまく行かなかった.ファイルが作成されない & 追記もできない
+#           -> 手作業でファイルを作成したら、うまく読み込まれている
+RUN cp /etc/skel/.bashrc /home/$USER_NAME/.bashrc && \
+    chown -R ${USER_NAME}:${USER_NAME} /home/$USER_NAME/.bashrc && \
+    echo "source /opt/ros/noetic/setup.bash" >> /home/$USER_NAME/.bashrc
+
 # デフォルトのユーザー切り替え
 USER $USER_NAME
+WORKDIR /home/$USER_NAME
 
 # Gazeboに必須. Nvidia Driverを使うようするための設定
 ENV NVIDIA_DRIVER_CAPABILITIES=all
