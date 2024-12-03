@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+
+<robot name="my_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ロボットの足元を示すリンク -->
+  <link name="robot_footprint"></link>
+
+  <!-- ロボットの足元とシャーシを接続するジョイント -->
+  <joint name="robot_footprint_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" /> <!-- 始点の座標と回転を指定 -->
+    <parent link="robot_footprint"/> <!-- 親リンク: 足元 -->
+    <child link="chassis" /> <!-- 子リンク: シャーシ -->
+  </joint>
+
+  <!-- シャーシリンク -->
+  <link name="chassis">
+    <pose>0 0 0.1 0 0 0</pose> <!-- シャーシの位置と姿勢 -->
+
+    <!-- シャーシの慣性情報 -->
+    <inertial>
+      <mass value="15.0"/> <!-- 質量 -->
+      <origin xyz="0.0 0 0" rpy=" 0 0 0"/> <!-- 慣性の原点と回転 -->
+      <inertia
+          ixx="0.1" ixy="0" ixz="0"
+          iyy="0.1" iyz="0"
+          izz="0.1"
+      /> <!-- 慣性行列 -->
+    </inertial>
+
+    <!-- シャーシの衝突形状 -->
+    <collision name="collision">
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 衝突判定の原点 -->
+      <geometry>
+        <box size=".4 .2 .1"/> <!-- 衝突形状: 箱のサイズ -->
+      </geometry>
+    </collision>
+
+    <!-- シャーシの視覚的な形状 -->
+    <visual name="chassis_visual">
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 視覚の原点 -->
+      <geometry>
+        <box size=".4 .2 .1"/> <!-- 視覚形状: 箱のサイズ -->
+      </geometry>
+    </visual>
+
+    <!-- 後部キャスターの衝突形状 -->
+    <collision name="back_caster_collision">
+      <origin xyz="-0.15 0 -0.05" rpy=" 0 0 0"/> <!-- 衝突判定の原点 -->
+      <geometry>
+        <sphere radius="0.0499"/> <!-- 衝突形状: 球の半径 -->
+      </geometry>
+    </collision>
+
+    <!-- 後部キャスターの視覚的な形状 -->
+    <visual name="back_caster_visual">
+      <origin xyz="-0.15 0 -0.05" rpy=" 0 0 0"/> <!-- 視覚の原点 -->
+      <geometry>
+        <sphere radius="0.05"/> <!-- 視覚形状: 球の半径 -->
+      </geometry>
+    </visual>
+
+    <!-- 前部キャスターの衝突形状 -->
+    <collision name="front_caster_collision">
+      <origin xyz="0.15 0 -0.05" rpy=" 0 0 0"/> <!-- 衝突判定の原点 -->
+      <geometry>
+        <sphere radius="0.0499"/> <!-- 衝突形状: 球の半径 -->
+      </geometry>
+    </collision>
+
+    <!-- 前部キャスターの視覚的な形状 -->
+    <visual name="front_caster_visual">
+      <origin xyz="0.15 0 -0.05" rpy=" 0 0 0"/> <!-- 視覚の原点 -->
+      <geometry>
+        <sphere radius="0.05"/> <!-- 視覚形状: 球の半径 -->
+      </geometry>
+    </visual>
+
+  </link>
+
+</robot>
