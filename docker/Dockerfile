@@ -87,6 +87,9 @@ RUN pip3 install --upgrade pip && \
 
 RUN sudo apt-get update && sudo apt-get upgrade -y
 
+# ROS関連
+RUN apt update && apt install vim -y
+
 # ユーザー情報を設定
 ARG USER_NAME
 ARG USER_ID
