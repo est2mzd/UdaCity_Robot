@@ -2,6 +2,16 @@
 
 <robot name="my_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <!-- 
+    剛体(link)は2個.　Fix joint で結合されている
+      1. robot_footprint : 見えない剛体.おそらくこれを動かす
+      2. chassis : 絵を3個持っている. 直方体1個 + 球2個
+
+    このURDF（Unified Robot Description Format）ファイルは、ロボットの構造を定義します。
+    ロボットには、足元、シャーシ、キャスターなどが含まれており、それらのリンクとジョイントを定義しています。
+    また、ロボットの衝突形状と視覚的な形状も設定しています。
+  -->
+
   <!-- ロボットの足元を示すリンク -->
   <link name="robot_footprint"></link>
 

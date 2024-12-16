@@ -15,3 +15,6 @@
 .sdformat/
 .vscode-server/
 **/devel/
+.ros/
+.viminfo
+.vscode/

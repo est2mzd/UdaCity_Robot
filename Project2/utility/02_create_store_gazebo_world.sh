@@ -1,25 +1,33 @@
-<?xml version="1.0" ?>
+#!/bin/bash
+set -e
+
+echo 1- Create an empty Gazebo world
+cd ~/catkin_ws/src/my_robot/worlds/
+touch empty.world
+
+echo 2- Add the following to empty.world
+
+echo '<?xml version="1.0" ?>
 <sdf version="1.4">
   <world name="default">
-    <!-- 地面の平面モデルを読み込む -->
     <include>
       <uri>model://ground_plane</uri>
     </include>
 
-    <!-- 太陽光源を読み込む -->
+    <!-- Light source -->
     <include>
       <uri>model://sun</uri>
     </include>
 
-    <!-- ワールドカメラの設定 -->
+    <!-- World camera -->
     <gui fullscreen="0">
       <camera name="world_camera">
-        <!-- カメラの位置と姿勢 -->
         <pose>4.927360 -4.376610 3.740080 0.000000 0.275643 2.356190</pose>
-        <!-- カメラのビューモードをオービット（回転）に設定 -->
         <view_controller>orbit</view_controller>
       </camera>
     </gui>
 
   </world>
-</sdf>
+</sdf>' > empty.world
+
+echo Finish
