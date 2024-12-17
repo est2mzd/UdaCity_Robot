@@ -12,6 +12,9 @@
     また、ロボットの衝突形状と視覚的な形状も設定しています。
   -->
 
+  <!-- 4.8. プラグインの読み込み -->
+  <xacro:include filename="$(find my_robot)/urdf/my_robot.gazebo" />
+
   <!-- ロボットの足元を示すリンク -->
   <link name="robot_footprint"></link>
 
@@ -84,7 +87,192 @@
         <sphere radius="0.05"/> <!-- 視覚形状: 球の半径 -->
       </geometry>
     </visual>
+  </link>
+
+   <!--Define variables for cylinder-->
+  <xacro:property name="mass"   value="5" />
+  <xacro:property name="radius" value="0.1" />
+  <xacro:property name="length" value="0.05" />
+  <xacro:property name="wheel_offset" value="0.15" />
+
+  <!-- Left Wheel -->
+  <link name="left_wheel">
+    <inertial>
+      <origin xyz="0 0 ${radius}" rpy="0 1.5707 1.5707"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="0.1" ixy="0.0" ixz="0.0"
+        iyy="0.1" iyz="0.0"
+        izz="0.1"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${length}" radius="${radius}"/>
+      </geometry>
+      <material name="white">
+        <color rgba="1.0 1.0 1.0 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${length}" radius="${radius}"/>
+      </geometry>
+    </collision>
 
   </link>
+
+  <joint type="continuous" name="left_wheel_hinge">
+    <origin xyz="0 ${wheel_offset} 0" rpy="0 0 0"/>
+    <child link="left_wheel"/>
+    <parent link="chassis"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+    <limit effort="10000" velocity="1000"/>
+    <dynamics damping="1.0" friction="1.0"/>
+  </joint>
+
+
+  <!-- Right Wheel -->
+  <link name="right_wheel">
+    <inertial>
+      <origin xyz="0 0 ${radius}" rpy="0 1.5707 1.5707"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="0.1" ixy="0.0" ixz="0.0"
+        iyy="0.1" iyz="0.0"
+        izz="0.1"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${length}" radius="${radius}"/>
+      </geometry>
+      <material name="white">
+        <color rgba="1.0 1.0 1.0 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${length}" radius="${radius}"/>
+      </geometry>
+    </collision>
+
+  </link>
+
+  <joint type="continuous" name="right_wheel_hinge">
+    <origin xyz="0 -${wheel_offset} 0" rpy="0 0 0"/>
+    <child link="right_wheel"/>
+    <parent link="chassis"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+    <limit effort="10000" velocity="1000"/>
+    <dynamics damping="1.0" friction="1.0"/>
+  </joint>
+
+
+  <!-- Cameraリンク -->
+  <link name="camera">
+
+    <!-- Cameraの慣性情報 -->
+    <inertial>
+      <mass value="0.1"/> <!-- 質量 -->
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 慣性の原点と回転 -->
+      <inertia
+          ixx="0.05" ixy="0" ixz="0"
+          iyy="0.05" iyz="0"
+          izz="0.05"
+      /> <!-- 慣性行列 -->
+    </inertial>
+
+    <!-- Cameraの衝突形状 -->
+    <collision>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 衝突判定の原点 -->
+      <geometry>
+        <box size="0.05 0.05 0.05"/> <!-- 衝突形状: 箱のサイズ -->
+      </geometry>
+    </collision>
+
+    <!-- Cameraの視覚的な形状 -->
+    <visual>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 視覚の原点 -->
+      <geometry>
+        <box size="0.05 0.05 0.05"/> <!-- 視覚形状: 箱のサイズ -->
+      </geometry> 
+    </visual>
+
+  </link>
+
+  <joint type="fixed" name="camera_joint">
+    <origin xyz="0.2 0 0" rpy="0 0 0"/>
+    <child link="camera"/>
+    <parent link="chassis"/>
+  </joint>
+
+
+
+ <!-- Lidarリンク -->
+  <link name="hokuyo">
+
+    <!-- Lidarの慣性情報 -->
+    <inertial>
+      <mass value="1e-5"/> <!-- 質量 -->
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 慣性の原点と回転 -->
+      <inertia
+          ixx="1e-6" ixy="0" ixz="0"
+          iyy="1e-6" iyz="0"
+          izz="1e-6"
+      /> <!-- 慣性行列 -->
+    </inertial>
+
+    <!-- Lidarの衝突形状 -->
+    <collision>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 衝突判定の原点 -->
+      <geometry>
+        <mesh filename="package://my_robot/meshes/hokuyo.dae" scale="1 1 1"/> <!-- 外部メッシュを使用 -->
+      </geometry> 
+    </collision>
+
+    <!-- Lidarの視覚的な形状 -->
+    <visual>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> <!-- 視覚の原点 -->
+      <geometry>
+        <mesh filename="package://my_robot/meshes/hokuyo.dae" scale="1 1 1"/> <!-- 外部メッシュを使用 -->
+      </geometry> 
+    </visual>
+
+  </link>
+
+  <joint type="fixed" name="hokuyo_joint">
+    <origin xyz="0.15 0 0.08" rpy="0 0 0"/>
+    <child link="hokuyo"/>
+    <parent link="chassis"/>
+  </joint>
+
+
+
+  <!-- 色の設定. visualの中のmaterialは反映されなかった -->
+  <gazebo reference="chassis">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="left_wheel">
+    <material>Gazebo/Green</material>
+  </gazebo>
+
+  <gazebo reference="right_wheel">
+    <material>Gazebo/Green</material>
+  </gazebo>
+
+  <gazebo reference="camera">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+
+
 
 </robot>
