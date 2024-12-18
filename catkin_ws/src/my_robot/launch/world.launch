@@ -9,19 +9,22 @@
 
 <!-- Robot pose -->
 <!-- ロボットの初期位置（x, y, z）および姿勢（roll, pitch, yaw）を指定 -->
-<arg name="x" default="0"/>   <!-- 初期位置のx座標（デフォルト値は0） -->
-<arg name="y" default="0"/>   <!-- 初期位置のy座標（デフォルト値は0） -->
-<arg name="z" default="0"/>   <!-- 初期位置のz座標（デフォルト値は0） -->
-<arg name="roll" default="0"/> <!-- 初期姿勢のroll角（デフォルト値は0） -->
+<arg name="x"     default="0"/> <!-- 初期位置のx座標（デフォルト値は0） -->
+<arg name="y"     default="0"/> <!-- 初期位置のy座標（デフォルト値は0） -->
+<arg name="z"     default="0"/> <!-- 初期位置のz座標（デフォルト値は0） -->
+<arg name="roll"  default="0"/> <!-- 初期姿勢のroll角（デフォルト値は0） -->
 <arg name="pitch" default="0"/> <!-- 初期姿勢のpitch角（デフォルト値は0） -->
-<arg name="yaw" default="0"/>   <!-- 初期姿勢のyaw角（デフォルト値は0） -->
+<arg name="yaw"   default="0"/> <!-- 初期姿勢のyaw角（デフォルト値は0） -->
 
 <!-- Launch other relevant files-->
 <!-- 他の関連ファイル（ロボットの設定ファイル等）を起動 -->
 <include file="$(find my_robot)/launch/robot_description.launch"/>
   <!-- World File -->
   <!-- シミュレーションで使用するGazeboのワールドファイルを指定 -->
+  <!--
   <arg name="world_file" default="$(find my_robot)/worlds/empty.world"/>
+  -->
+  <arg name="world_file" default="$(find my_robot)/worlds/UdaCityOffice.world"/>
 
   <!-- Launch Gazebo World -->
   <!-- Gazeboの空のワールドを起動し、必要な引数を設定 -->
@@ -38,9 +41,38 @@
 
 <!-- Spawn My Robot -->
 <!-- Gazeboシミュレーションにロボットモデルをスポーンさせるノードを起動 -->
+<!-- 詳細なパラメータ説明
+    -urdf : 
+        URDF形式のモデルを読み込むことを指定します。
+
+    -param robot_description
+        ROSパラメータサーバ上に格納されているrobot_descriptionを使用してモデルを読み込みます。
+        このパラメータには、事前にrobot_description.launchで設定されたURDF（またはXacro）ファイルが含まれています。
+
+    -model my_robot
+        Gazebo内でのモデル名をmy_robotとして指定します。
+        他のモデルと名前が被らないようにする必要があります。
+
+    -x $(arg x) -y $(arg y) -z $(arg z)
+        ロボットの初期位置を指定します。
+        それぞれ、x（前後方向）、y（左右方向）、z（高さ）を設定。
+
+    -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)
+        ロボットの初期姿勢を指定します。
+        roll（回転軸の傾き）、pitch（前後の傾き）、yaw（水平回転）を設定。
+-->
 <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-      args="-urdf -param robot_description -model my_robot
+      args="-urdf 
+            -param robot_description 
+            -model my_robot
             -x $(arg x) -y $(arg y) -z $(arg z)
             -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
+
+<!-- RVizを起動 -->
+<!-- RVizはROSの可視化ツールで、ロボットモデルやセンサー情報、座標変換（TF）などを視覚的に確認できます -->
+<node name="rviz" pkg="rviz" type="rviz" respawn="false"/>
+
+
+
 
 </launch>
