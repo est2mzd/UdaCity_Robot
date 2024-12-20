@@ -19,3 +19,5 @@
 .viminfo
 .vscode/
 .rviz/
+**backup**/
+**/*.zip
