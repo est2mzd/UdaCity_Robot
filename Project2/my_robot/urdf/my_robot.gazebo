@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<robot>
+
+  <!-- Gazebo用プラグイン: 差動駆動コントローラ -->
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <!-- レガシーモードを無効化 -->
+      <legacyMode>false</legacyMode>
+      <!-- 常に有効にするかどうか -->
+      <alwaysOn>true</alwaysOn>
+      <!-- 更新レート（Hz単位） -->
+      <updateRate>10</updateRate>
+      <!-- 左ホイールのジョイント名 -->
+      <leftJoint>left_wheel_hinge</leftJoint>
+      <!-- 右ホイールのジョイント名 -->
+      <rightJoint>right_wheel_hinge</rightJoint>
+      <!-- ホイール間の距離（メートル単位） -->
+      <wheelSeparation>0.4</wheelSeparation>
+      <!-- ホイールの直径（メートル単位） -->
+      <wheelDiameter>0.2</wheelDiameter>
+      <!-- ホイールのトルク制限 -->
+      <torque>10</torque>
+      <!-- 速度指令のROSトピック名 -->
+      <commandTopic>cmd_vel</commandTopic>
+      <!-- オドメトリ情報のROSトピック名 -->
+      <odometryTopic>odom</odometryTopic>
+      <!-- オドメトリフレーム名 -->
+      <odometryFrame>odom</odometryFrame>
+      <!-- ロボットのベースフレーム名 -->
+      <robotBaseFrame>robot_footprint</robotBaseFrame>
+      <!-- ホイールのTF情報を発行するか -->
+      <publishWheelTF>false</publishWheelTF>
+      <!-- ホイールジョイント状態を発行するか -->
+      <publishWheelJointState>false</publishWheelJointState>
+      <!-- ROSデバッグレベル（naはデフォルト） -->
+      <rosDebugLevel>na</rosDebugLevel>
+      <!-- ホイールの加速度制限 -->
+      <wheelAcceleration>0</wheelAcceleration>
+      <!-- ホイールのトルク値 -->
+      <wheelTorque>5</wheelTorque>
+      <!-- オドメトリ情報の取得元 -->
+      <odometrySource>world</odometrySource>
+      <!-- TF情報を発行するか -->
+      <publishTf>1</publishTf>
+      <!-- オドメトリTF情報を発行するか -->
+      <publishOdomTF>true</publishOdomTF>
+    </plugin>
+  </gazebo>
+
+  <!-- カメラセンサの設定 -->
+  <gazebo reference="camera">
+    <sensor type="camera" name="camera1">
+      <!-- 更新レート（Hz単位） -->
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <!-- 水平視野角 -->
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <!-- 画像サイズとフォーマット -->
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <!-- クリッピング範囲（近距離・遠距離） -->
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+      </camera>
+      <!-- Gazebo用カメラプラグイン -->
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>camera</cameraName>
+        <!-- 画像とカメラインフォのROSトピック名 -->
+        <imageTopicName>rgb/image_raw</imageTopicName>
+        <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+        <frameName>camera</frameName>
+        <!-- ベースライン設定 -->
+        <hackBaseline>0.07</hackBaseline>
+        <!-- 歪みパラメータ（初期値は0） -->
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Hokuyo LIDARセンサの設定 -->
+  <gazebo reference="hokuyo">
+    <sensor type="ray" name="head_hokuyo_sensor">
+      <!-- センサの位置と回転 -->
+      <pose>0 0 0 0 0 0</pose>
+      <!-- 可視化の有効/無効 -->
+      <visualize>false</visualize>
+      <!-- 更新レート（Hz単位） -->
+      <update_rate>40</update_rate>
+      <!-- レーザーの走査設定 -->
+      <ray>
+        <scan>
+          <horizontal>
+            <!-- サンプル数 -->
+            <samples>720</samples>
+            <!-- 分解能 -->
+            <resolution>1</resolution>
+            <!-- 最小角度と最大角度 -->
+            <min_angle>-1.570796</min_angle>
+            <max_angle>1.570796</max_angle>
+          </horizontal>
+        </scan>
+        <!-- レーザーの検出範囲 -->
+        <range>
+          <min>0.10</min>
+          <max>30.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <!-- ノイズ設定 -->
+        <noise>
+          <type>gaussian</type>
+          <!-- 平均値と標準偏差 -->
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <!-- Gazebo用LIDARプラグイン -->
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+        <!-- LIDARデータを出力するROSトピック -->
+        <topicName>/scan</topicName>
+        <!-- フレーム名 -->
+        <frameName>hokuyo</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+</robot>

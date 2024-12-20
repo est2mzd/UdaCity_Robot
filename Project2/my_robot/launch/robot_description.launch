@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- 
+    このlaunchファイルは、ロボットのURDF（Unified Robot Description Format）モデルをROSパラメータサーバに送信します。
+    URDFモデルはロボットの構造を定義しており、これをパラメータサーバに読み込ませることで、
+    ロボットのシミュレーションや制御が可能になります。
+  -->
+
+  <!-- URDFをパラメータサーバに送信 -->
+  <!-- Xacroを使用してURDFファイルを読み込み、robot_descriptionというパラメータとして設定 -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find my_robot)/urdf/my_robot.xacro'" />
+
+  <!-- 偽のジョイント値を送信するノード -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+  </node>
+
+  <!-- ロボットの状態をTF（座標変換）に送信するノード -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen"/>
+
+
+</launch>
