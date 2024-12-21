@@ -45,16 +45,16 @@ void process_image_callback(const sensor_msgs::Image img)
 
     // white_ball_pos: 0=not found, 1=left, 2=center, 3=right
     int white_ball_pos = 0;
-    int col_left_boundary  = int(width/5*2);
-    int col_right_boundary = int(width/5*3);
+    int col_left_boundary  = int(width/3); //int(width/5*2);
+    int col_right_boundary = int(width/3*2); //int(width/5*3);
 
     // 移動速度
     float lin_x = 0.5;
-    float ang_z = 0.5;
+    float ang_z = 0.2;
 
     for(int row=0; row < height; row++)
     {
-        for(int col=0; col < width; col++)
+        for(int col=0; col < width; col+=3)
         {
             // ピクセルデータのインデックスを計算
             int pixel_index = (row * step) + (col * bytes_per_pixel);
