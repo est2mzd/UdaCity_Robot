@@ -1,5 +1,5 @@
 # ベースイメージ
-FROM osrf/ros:noetic-desktop-full
+FROM osrf/ros:kinetic-desktop-full
 
 # メンテナ情報
 LABEL maintainer="takuya@example.com"
@@ -15,15 +15,18 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     nano \
-    python3-pip \
-    python3-rosdep \
-    python3-rosinstall \
-    python3-rosinstall-generator \
-    python3-wstool \
+    python-pip \
+    python-rosdep \
+    python-catkin-pkg \
+    python-rosinstall \
+    python-rosinstall-generator \
+    python-wstool \
     mesa-utils \
     libgl1-mesa-dri \
-    libglx-mesa0 \
-    libegl-mesa0 \
+    # libglx-mesa0 はUbuntu16.04には存在しないためコメントアウト \
+    # libglx-mesa0 \
+    # libegl-mesa0 もUbuntu16.04には存在しないためコメントアウト \
+    # libegl-mesa0 \
     libosmesa6 \
     x11-apps \
     sudo \
@@ -36,71 +39,71 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libeigen3-dev \
     libpcl-dev \
-    python3 \
-    python3-pip \
-    && pip3 install --upgrade pip \
+    python \
+    python-pip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# pipのバージョンをPython2互換の最新に固定
+RUN python -m pip install --upgrade pip==20.3.4
 
 # OpenCVのインストール
 RUN apt-get update && apt-get install -y \
     libopencv-dev \
-    python3-opencv \
+    python-opencv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 
 # NVIDIAリポジトリを追加
-RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && \
-    curl -s -L https://nvidia.github.io/libnvidia-container/ubuntu20.04/libnvidia-container.list | \
-    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-    tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && \
-    apt-get update
+#RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && \
+#    curl -s -L https://nvidia.github.io/libnvidia-container/ubuntu20.04/libnvidia-container.list | \
+#    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+#    tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && \
+#    apt-get update
+# 上記はUbuntu20.04用の設定のためコメントアウト
 
 # NVIDIA対応のライブラリをインストール
-RUN apt-get update && apt-get install -y \
-    nvidia-container-toolkit \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get install -y \
+#    nvidia-container-toolkit \
+#    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# 上記はGPUサポート用の設定のため、必要に応じて有効化
 
 # 環境変数設定
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
 
 # ROSデフォルト設定をBashに追加
-RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+RUN echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 
 # Gazebo関連の必要なパッケージをインストール
 RUN apt-get update && apt-get install -y \
-    ros-noetic-gazebo-ros-pkgs \
-    ros-noetic-gazebo-ros-control \
-    ros-noetic-effort-controllers \
-    ros-noetic-joint-state-controller \
+    ros-kinetic-gazebo-ros-pkgs \
+    ros-kinetic-gazebo-ros-control \
+    ros-kinetic-effort-controllers \
+    ros-kinetic-joint-state-controller \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Python依存パッケージをインストール
-RUN pip3 install --upgrade pip && \
-    pip3 install \
+RUN pip install --upgrade pip==20.3.4 && \
+    pip install \
     numpy \
     jupyterlab \
     notebook && \
-    pip3 install pcg-gazebo --no-deps && \
-    pip3 install \
-    trimesh svg.path colorlog numpy-quaternion
+    pip install pcg-gazebo --no-deps && \
+    pip install \
+    trimesh==3.9.35 \
+    svg.path \
+    colorlog && \
+    pip install --upgrade six==1.11.0
 
 RUN sudo apt-get update && sudo apt-get upgrade -y
 
 # ROS関連
 RUN apt update && apt install vim -y
 
-#================ 追加 TutleBot3 <Start> ====================#
-# TurtleBot3関連パッケージのインストール
-RUN apt-get update && apt-get install -y \
-    ros-noetic-turtlebot3 \
-    ros-noetic-turtlebot3-simulations \
-#    ros-noetic-turtlebot3-navigation \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# 環境変数の設定
-ENV TURTLEBOT3_MODEL=burger
-#================ 追加 TutleBot3 < End > ====================#
+# ROS関連の不足項目
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
+    apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    apt update && \
+    apt install -y ros-kinetic-desktop-full
 
 # ユーザー情報を設定
 ARG USER_NAME
@@ -115,7 +118,7 @@ RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 #           -> 手作業でファイルを作成したら、うまく読み込まれている
 RUN cp /etc/skel/.bashrc /home/$USER_NAME/.bashrc && \
     chown -R ${USER_NAME}:${USER_NAME} /home/$USER_NAME/.bashrc && \
-    echo "source /opt/ros/noetic/setup.bash" >> /home/$USER_NAME/.bashrc
+    echo "source /opt/ros/kinetic/setup.bash" >> /home/$USER_NAME/.bashrc
 
 # デフォルトのユーザー切り替え
 USER $USER_NAME
@@ -126,6 +129,6 @@ ENV NVIDIA_DRIVER_CAPABILITIES=all
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV __NV_PRIME_RENDER_OFFLOAD=1
 ENV __GLX_VENDOR_LIBRARY_NAME=nvidia
-    
+
 # 起動時にBashを実行
 CMD ["/bin/bash"]

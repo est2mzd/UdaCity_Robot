@@ -115,4 +115,20 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
-source /opt/ros/melodic/setup.bash
+
+# 自動でうまく行かないので、手動で調整
+# Noetic
+if [ -d "/opt/ros/noetic" ]; then
+    source /opt/ros/noetic/setup.bash
+fi
+
+# Melodic
+if [ -d "/opt/ros/melodic" ]; then
+    source /opt/ros/melodic/setup.bash
+fi
+
+# Kinetic
+if [ -d "/opt/ros/kinetic" ]; then
+    source /opt/ros/kinetic/setup.bash
+fi
+

@@ -1,0 +1,14 @@
+https://github.com/elena-ecn/RoboticsND-Where-Am-I
+
+https://github.com/search?q=RoboticsND-Where-Am-I&type=repositories&p=1
+
+
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y
+
+sudo apt install turtlebot*
+
+
+Follow these steps and write this in terminal:-
+1. export SVGA_VGPU10=0
+2. source devel/setup.bash
