@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     nano \
     python3-pip \
     python3-rosdep \
+    python3-catkin-pkg \
     python3-rosinstall \
     python3-rosinstall-generator \
     python3-wstool \
@@ -65,14 +66,14 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
 
 # ROSデフォルト設定をBashに追加
-RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+RUN echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 
 # Gazebo関連の必要なパッケージをインストール
 RUN apt-get update && apt-get install -y \
-    ros-noetic-gazebo-ros-pkgs \
-    ros-noetic-gazebo-ros-control \
-    ros-noetic-effort-controllers \
-    ros-noetic-joint-state-controller \
+    ros-melodic-gazebo-ros-pkgs \
+    ros-melodic-gazebo-ros-control \
+    ros-melodic-effort-controllers \
+    ros-melodic-joint-state-controller \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Python依存パッケージをインストール
@@ -90,6 +91,20 @@ RUN sudo apt-get update && sudo apt-get upgrade -y
 # ROS関連
 RUN apt update && apt install vim -y
 
+# ROS関連の不足項目
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
+    apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    apt update && \
+    apt install -y ros-melodic-desktop-full
+
+
+#    sudo apt-get install -y \
+#        ros-melodic-xacro \
+#        ros-melodic-turtlebot-navigation
+
+
+
+
 # ユーザー情報を設定
 ARG USER_NAME
 ARG USER_ID
@@ -103,7 +118,7 @@ RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 #           -> 手作業でファイルを作成したら、うまく読み込まれている
 RUN cp /etc/skel/.bashrc /home/$USER_NAME/.bashrc && \
     chown -R ${USER_NAME}:${USER_NAME} /home/$USER_NAME/.bashrc && \
-    echo "source /opt/ros/noetic/setup.bash" >> /home/$USER_NAME/.bashrc
+    echo "source /opt/ros/melodic/setup.bash" >> /home/$USER_NAME/.bashrc
 
 # デフォルトのユーザー切り替え
 USER $USER_NAME
