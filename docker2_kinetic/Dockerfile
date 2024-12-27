@@ -1,103 +1,210 @@
-# ベースイメージ
-FROM osrf/ros:kinetic-desktop-full
+#############################################
+# Created from template ros.dockerfile.jinja
+#############################################
+
+###########################################
+# Base image 
+###########################################
+FROM ubuntu:16.04 AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ロケールの設定
-RUN apt-get update && apt-get install -y locales
-RUN locale-gen ja_JP.UTF-8
+# Install language
+RUN apt-get update && apt-get install -y \
+  locales \
+  && locale-gen en_US.UTF-8 \
+  && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
+  && rm -rf /var/lib/apt/lists/*
+ENV LANG en_US.UTF-8
 
-# 基本ツールのインストール
-RUN apt-get install -y curl
-RUN apt-get install -y wget
-RUN apt-get install -y git
-RUN apt-get install -y python-pip
-RUN apt-get install -y build-essential
-RUN apt-get install -y cmake
-RUN apt-get install -y udev
-RUN apt-get install -y linux-headers-4.4.0-210-generic
+# Install timezone
+RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
+  && export DEBIAN_FRONTEND=noninteractive \
+  && apt-get update \
+  && apt-get install -y tzdata \
+  && dpkg-reconfigure --frontend noninteractive tzdata \
+  && rm -rf /var/lib/apt/lists/*
 
+# Install ROS
+RUN apt-get update && apt-get install -y \
+    curl \
+    dirmngr \
+    gnupg2 \
+    lsb-release \
+    sudo \
+  && sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' \
+  && curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - \
+  && apt-get update && apt-get install -y \
+    ros-kinetic-ros-base \
+  && rm -rf /var/lib/apt/lists/*
+
+# Setup environment
+ENV LD_LIBRARY_PATH=/opt/ros/kinetic/lib
+ENV ROS_DISTRO=kinetic
+ENV ROS_ROOT=/opt/ros/kinetic/share/ros
+ENV ROS_PACKAGE_PATH=/opt/ros/kinetic/share
+ENV ROS_MASTER_URI=http://localhost:11311
+ENV ROS_PYTHON_VERSION=
+ENV ROS_VERSION=1
+ENV PATH=/opt/ros/kinetic/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV ROSLISP_PACKAGE_DIRECTORIES=
+ENV PYTHONPATH=/opt/ros/kinetic/lib/python2.7/dist-packages
+ENV PKG_CONFIG_PATH=/opt/ros/kinetic/lib/pkgconfig
+ENV ROS_ETC_DIR=/opt/ros/kinetic/etc/ros
+ENV CMAKE_PREFIX_PATH=/opt/ros/kinetic
+ENV DEBIAN_FRONTEND=
+
+###########################################
+# Develop image 
+###########################################
+FROM base AS dev
+
+ENV DEBIAN_FRONTEND=noninteractive
+# Install dev tools
+RUN apt-get update && apt-get install -y \
+    python-rosdep \
+    python-rosinstall \
+    python-rosinstall-generator \
+    python-wstool \
+    python-pip \
+    python-pep8 \
+    python-autopep8 \
+    pylint \
+    build-essential \
+    bash-completion \
+    git \
+    vim \
+  && rm -rf /var/lib/apt/lists/* \
+  && rosdep init || echo "rosdep already initialized"
+
+#ARG USERNAME=$USER_NAME
+#ARG USER_UID=$USER_ID
+#ARG USER_GID=$USER_GID
+
+ARG USERNAME=takuya
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+# Create a non-root user
+RUN groupadd --gid $USER_GID $USERNAME \
+  && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+  # [Optional] Add sudo support for the non-root user
+  && apt-get update \
+  && apt-get install -y sudo \
+  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
+  && chmod 0440 /etc/sudoers.d/$USERNAME \
+  # Cleanup
+  && rm -rf /var/lib/apt/lists/* \
+  && echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
+  && echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
+ENV DEBIAN_FRONTEND=
+
+###########################################
+# Full image 
+###########################################
+FROM dev AS full
+
+ENV DEBIAN_FRONTEND=noninteractive
+# Install the full release
+RUN apt-get update && apt-get install -y \
+  ros-kinetic-desktop \
+  && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=
+
+###########################################
+#  Full+Gazebo image 
+###########################################
+FROM full AS gazebo
+
+ENV DEBIAN_FRONTEND=noninteractive
+# Install gazebo
+RUN apt-get update && apt-get install -y \
+  ros-kinetic-gazebo* \
+  && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=
+
+###########################################
+#  Full+Gazebo+Nvidia image 
+###########################################
+
+FROM gazebo AS gazebo-nvidia
+
+################
+# Expose the nvidia driver to allow opengl 
+# Dependencies for glvnd and X11.
+################
+#RUN apt-get update \
+# && apt-get install -y -qq --no-install-recommends \
+#  libglvnd0 \
+#  libgl1 \
+#  libglx0 \
+#  libegl1 \
+#  libxext6 \
+#  libx11-6
+
+RUN apt-get update && apt-get install -y -qq --no-install-recommends \
+    libgl1-mesa-glx \
+    libegl1-mesa \
+    libxext6 \
+    libx11-6
+
+# Env vars for the nvidia-container-runtime.
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
+ENV QT_X11_NO_MITSHM 1
+
+#===================================================================#
 # ROS依存パッケージ（Gazebo関連）のインストール
-RUN apt-get install -y ros-kinetic-gazebo-ros-pkgs
-RUN apt-get install -y ros-kinetic-gazebo-ros-control
+RUN apt-get install -y \
+      ros-kinetic-gazebo-ros \
+      ros-kinetic-gazebo-ros-pkgs \
+      ros-kinetic-gazebo-ros-control \
+      ros-kinetic-rviz
 
-# 問題発生パッケージの分割インストール
-RUN apt-get install -y ros-kinetic-librealsense || echo "Failed: librealsense"
-RUN apt-get install -y ros-kinetic-realsense-camera || echo "Failed: realsense-camera"
+RUN apt-get update &&\
+    apt-get install -y --no-install-recommends \
+      udev \
+      python-catkin-tools
+
+      # 問題発生パッケージの分割インストール
+#RUN apt-get install -y ros-kinetic-librealsense*
+#RUN apt-get install -y ros-kinetic-realsense*-camera
+
+RUN apt-get update &&\
+    apt-get install -y \
+      ros-kinetic-navigation \
+      ros-kinetic-map-server \
+      ros-kinetic-move-base \
+      ros-kinetic-amcl \
+      ros-kinetic-kobuki-gazebo-plugins \
+      ros-kinetic-depthimage-to-laserscan \
+      ros-kinetic-yocs-cmd-vel-mux \
+      ros-kinetic-joy \
+      ros-kinetic-yocs-velocity-smoother \
+      ros-kinetic-kobuki-dashboard \
+      ros-kinetic-turtlebot-msgs \
+      ros-kinetic-compressed-image-transport \
+      ros-kinetic-gmapping \
+      ros-kinetic-kobuki-description \
+      ros-kinetic-kobuki-safety-controller \
+      ros-kinetic-depth-image-proc \
+      mesa-utils
+
 
 # TurtleBot関連パッケージ
-RUN apt-get install -y ros-kinetic-turtlebot || echo "Failed: turtlebot"
-RUN apt-get install -y ros-kinetic-turtlebot-simulator || echo "Failed: turtlebot-simulator"
-RUN apt-get install -y ros-kinetic-turtlebot-bringup || echo "Failed: turtlebot-bringup"
-RUN apt-get install -y ros-kinetic-turtlebot-navigation || echo "Failed: turtlebot-navigation"
-RUN apt-get install -y ros-kinetic-turtlebot-gazebo || echo "Failed: turtlebot-gazebo"
-RUN apt-get install -y ros-kinetic-turtlebot-stage || echo "Failed: turtlebot-stage"
-RUN apt-get install -y ros-kinetic-turtlebot-stdr || echo "Failed: turtlebot-stdr"
-
-# 環境設定
-# NOTE: 'rosdep init' はすでに初期化されているため、ビルド時に実行する必要はありません。
-#       必要であれば、コンテナ実行後に以下のコマンドを手動実行してください:
-#       $ rosdep update
-RUN echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
-
-# 追加: Python開発用ツール
-# RUN apt-get install -y python-rosinstall
-#RUN apt-get install -y python-rosinstall-generator
-#RUN apt-get install -y python-wstool
-#RUN apt-get install -y python-vcstool
-#RUN apt-get install -y python-catkin-tools
-
-# 追加: 依存関係修復
-#RUN apt-get install -y python-empy
-#RUN apt-get install -y python-nose
-#RUN apt-get install -y python-catkin-pkg
-#RUN apt-get install -y python-yaml
-#RUN apt-get install -y python-rospkg
-#RUN apt-get install -y python-netifaces
-
-# 追加: ネットワークツール
-#RUN apt-get install -y net-tools
-#RUN apt-get install -y iputils-ping
-
-# 追加: デバッグ用ツール
-#RUN apt-get install -y nano
-#RUN apt-get install -y vim
-#RUN apt-get install -y lsof
-#RUN apt-get install -y strace
-
-# Open-GL関連
-#RUN apt-get update && apt-get install -y mesa-utils 
-#RUN apt-get update && apt-get install -y libgl1-mesa-dri
-#RUN apt-get update && apt-get install -y xserver-xorg-video-intel
-
-# OpenGL関連のインストール
-#RUN apt-get update && \
-#    apt-get install -y \
-#        libx11-dev xorg-dev \
-#        libglu1-mesa libglu1-mesa-dev \
-#        libgl1-mesa-glx libgl1-mesa-dev
-
-#RUN apt-get update && apt-get install -y --no-install-recommends mesa-utils
-#RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-dri
-#RUN apt-get update && apt-get install -y --no-install-recommends xserver-xorg-video-intel
-#RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-glx
-#RUN apt-get update && apt-get install -y --no-install-recommends libegl1-mesa
-#RUN apt-get update && apt-get install -y --no-install-recommends libgles2-mesa
-#RUN apt-get update && apt-get install -y --no-install-recommends xserver-xorg-core
-##RUN apt-get update && apt-get install -y --no-install-recommends xserver-xorg-video-all
-#RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-
-
-# 環境変数の設定
-ENV ROS_DISTRO=kinetic
-ENV TURTLEBOT_GAZEBO_WORLD_FILE=/opt/ros/kinetic/share/turtlebot_gazebo/worlds/playground.world
-
+#RUN apt-get install -y ros-kinetic-turtlebot
+#RUN apt-get install -y ros-kinetic-turtlebot-simulator
+#RUN apt-get install -y ros-kinetic-turtlebot-bringup
+#RUN apt-get install -y ros-kinetic-turtlebot-navigation
+#RUN apt-get install -y ros-kinetic-turtlebot-gazebo
+#RUN apt-get install -y ros-kinetic-turtlebot-stage
+#RUN apt-get install -y ros-kinetic-turtlebot-stdr
+#===================================================================#
 # ユーザー情報を設定
-ARG USER_NAME
-ARG USER_ID
-RUN useradd -m -s /bin/bash -u $USER_ID $USER_NAME && \
-    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+#ARG USER_NAME
+#ARG USER_ID
+#RUN useradd -m -s /bin/bash -u $USER_ID $USER_NAME && \
+#    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # 権限を適切に設定
 RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
@@ -105,6 +212,7 @@ RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 # デフォルトのユーザー切り替え
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
+#===================================================================#
 
 # デフォルトのコマンドとしてbashを起動
 CMD ["/bin/bash"]

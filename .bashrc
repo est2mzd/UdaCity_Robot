@@ -132,4 +132,10 @@ if [ -d "/opt/ros/kinetic" ]; then
     source /opt/ros/kinetic/setup.bash
 fi
 
-#export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/opt/ros/noetic/lib/pkgconfig
+# 一時的にソフトウェアレンダリングを使用して、OpenGL ドライバとの競合を回避
+export LIBGL_ALWAYS_SOFTWARE=1 
+
+# NVIDIA ドライバを使用している場合は、GPU ライブラリを指定します。
+export LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/mesa
+
