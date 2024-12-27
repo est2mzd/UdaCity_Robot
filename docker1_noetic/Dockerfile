@@ -92,10 +92,12 @@ RUN apt update && apt install vim -y
 
 #================ 追加 TutleBot3 <Start> ====================#
 # TurtleBot3関連パッケージのインストール
-RUN apt-get update && apt-get install -y \
-    ros-noetic-turtlebot3 \
-    ros-noetic-turtlebot3-simulations \
-#    ros-noetic-turtlebot3-navigation \
+RUN apt-get update && \
+    apt-get install -y \
+        ros-noetic-turtlebot3 \
+        ros-noetic-turtlebot3-simulations \
+        ros-noetic-turtlebot3-navigation \
+        liborocos-bfl-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 環境変数の設定

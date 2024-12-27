@@ -132,3 +132,4 @@ if [ -d "/opt/ros/kinetic" ]; then
     source /opt/ros/kinetic/setup.bash
 fi
 
+#export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/opt/ros/noetic/lib/pkgconfig
