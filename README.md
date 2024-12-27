@@ -23,13 +23,9 @@ cd ../catkin_ws2_kinetic/
 ```
 ```
 # build catkin
-./80_clone_turtlebot_sim.sh
-./81_copy_launch_file_ekf.sh
-./82_install_dependencies.sh
-./83_clone_robot_pose_ekf.sh
-./84_clone_odom_to_traj.sh
-./85_clone_turtlebot.sh
-./86_install_dependencies.sh
+./80_clone_turtlebot_repo.sh
+./81_install_dependencies.sh
+./82_copy_launch_file_ekf.sh
 ./01_catkiin_build.sh
 ```
 ```

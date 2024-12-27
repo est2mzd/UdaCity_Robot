@@ -149,9 +149,27 @@ RUN apt-get update && apt-get install -y -qq --no-install-recommends \
     libx11-6
 
 # Env vars for the nvidia-container-runtime.
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
-ENV QT_X11_NO_MITSHM 1
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
+ENV QT_X11_NO_MITSHM=1
+
+#===================================================================#
+# Install X server and required dependencies
+RUN apt-get update && apt-get install -y \
+    x11-apps \
+    x11-xserver-utils \
+    xorg \
+    xauth \
+    x11-utils \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri \
+    mesa-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure X server environment variables
+ENV DISPLAY=:0
+
+
 
 #===================================================================#
 # ROS依存パッケージ（Gazebo関連）のインストール
