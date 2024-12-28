@@ -8,7 +8,7 @@ source devel/setup.bash
 
 # 一時的にソフトウェアレンダリングを使用して、OpenGL ドライバとの競合を回避
 # .bashrc に追記した
-# export LIBGL_ALWAYS_SOFTWARE=1 
+#export LIBGL_ALWAYS_SOFTWARE=1 
 
 roslaunch turtlebot_gazebo turtlebot_world.launch
 

@@ -133,9 +133,11 @@ if [ -d "/opt/ros/kinetic" ]; then
 fi
 
 # 一時的にソフトウェアレンダリングを使用して、OpenGL ドライバとの競合を回避
-export LIBGL_ALWAYS_SOFTWARE=1 
+#export LIBGL_ALWAYS_SOFTWARE=1 
 
 # NVIDIA ドライバを使用している場合は、GPU ライブラリを指定します。
-export LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
-export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/mesa
+#export LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+
+# 共有ライブラリの検索パスを定義する環境変数
+#export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/mesa
 

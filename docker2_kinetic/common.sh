@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # build.sh に必要な変数
-IMAGE_NAME="udacity_robot_ros1_kinetic_"$USER
+IMAGE_NAME="udacity_robot_ros1_kinetic"
 #IMAGE_NAME="udacity_robot_ros2_"$USER
 DOCKERFILE_DIR=$(dirname "$0")
 
@@ -11,7 +11,7 @@ USER_ID=$(id -u) #USER_ID=1001
 USER_GID=$(id -g)
 
 # start.sh に必要な変数
-CONTAINER_NAME=$IMAGE_NAME
+CONTAINER_NAME="${IMAGE_NAME}_${USER}"
 
 # このファイルの1個上をマウントする
 #WORK_DIR=$(dirname "$(dirname "$0")")

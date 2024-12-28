@@ -7,20 +7,29 @@ source "$(dirname "$0")/common.sh"
 # コンテナ内とディスプレイを共有するために下記を追加
 #    --env "DISPLAY=$DISPLAY" \
 #    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+
+# ローカルユーザーがX11ディスプレイにアクセスできるようにします。
+xhost +local:root   # コンテナ内の root  への許可
+xhost +local:$USER  # コンテナ内の $USER への許可
+
 docker run \
     --rm \
     -itd \
     -p 8888:8888 \
     -v "$WORK_DIR":/home/$USER \
-    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    -v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    -v "$XAUTH:$XAUTH" \
     --privileged \
     --name "$CONTAINER_NAME" \
     --workdir /home/$USER \
-    --user $USER_NAME:$USER_NAME \
     --user $USER_ID:$USER_GID \
-    --env  USER_ID=$USER_ID \
-    --env "DISPLAY=$DISPLAY" \
+    --env="USER_ID=$USER_ID" \
+    --env="DISPLAY=$DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
+    --env="XAUTHORITY=$XAUTH" \
     --device /dev/dri:/dev/dri \
     --runtime nvidia \
-    --gpus '"device=0"' \
+    --gpus all \
     "$IMAGE_NAME"
+
+#     --gpus '"device=0"' \    

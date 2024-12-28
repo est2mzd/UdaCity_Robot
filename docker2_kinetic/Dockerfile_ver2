@@ -1,0 +1,103 @@
+# ベースイメージ
+FROM osrf/ros:kinetic-desktop-full
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ロケールの設定
+RUN apt-get update && apt-get install -y locales
+RUN locale-gen ja_JP.UTF-8
+
+# 基本ツールのインストール
+RUN apt-get install -y \
+    curl \
+    wget \
+    git \
+    python-pip \
+    build-essential \
+    cmake \
+    udev \
+    linux-headers-4.4.0-210-generic
+
+# ROS依存パッケージ（Gazebo関連）のインストール
+RUN apt-get install -y \
+    ros-kinetic-gazebo-ros-pkgs \
+    ros-kinetic-gazebo-ros-control
+
+# 問題発生パッケージの依存関係修復
+# コメントアウト: 問題のあるパッケージのインストール
+# RUN apt-get install -y ros-kinetic-librealsense || echo "Failed: librealsense"
+# RUN apt-get install -y ros-kinetic-realsense-camera || echo "Failed: realsense-camera"
+
+# 追加: 依存関係解決用のリストインストール
+# RUN apt-get install -y ros-kinetic-librealsense ros-kinetic-realsense-camera --fix-missing
+
+# TurtleBot関連パッケージのインストール
+# コメントアウト: 分割インストール
+# RUN apt-get install -y ros-kinetic-turtlebot || echo "Failed: turtlebot"
+# RUN apt-get install -y ros-kinetic-turtlebot-gazebo || echo "Failed: turtlebot-gazebo"
+
+# 追加: 依存関係をまとめてインストール
+#RUN apt-get install -y \
+#    ros-kinetic-turtlebot \
+#    ros-kinetic-turtlebot-simulator \
+#    ros-kinetic-turtlebot-bringup \
+#    ros-kinetic-turtlebot-navigation \
+#    ros-kinetic-turtlebot-gazebo \
+#    ros-kinetic-turtlebot-stage \
+#    ros-kinetic-turtlebot-stdr
+
+# OpenGL関連のインストール
+# コメントアウト: 古い設定
+# RUN apt-get update && apt-get install -y mesa-utils
+
+# 追加: OpenGLの依存関係をまとめてインストール
+RUN apt-get update && apt-get install -y \
+    mesa-utils \
+    libgl1-mesa-dri \
+    xserver-xorg-video-intel \
+    xserver-xorg-core \
+    libglu1-mesa-dev \
+    libgles2-mesa \
+    --no-install-recommends
+
+# クリーンアップ
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Pythonパッケージのインストール
+#RUN apt-get install -y \
+#    python-rosinstall \
+#    python-rosinstall-generator \
+#    python-wstool \
+#    python-vcstool \
+#    python-catkin-tools \
+#    python-empy \
+#    python-nose \
+#    python-catkin-pkg \
+#    python-yaml \
+#    python-rospkg \
+#    python-netifaces
+
+# 環境設定
+RUN echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+
+# ユーザー情報を設定
+ARG USER_NAME
+ARG USER_ID
+# コメントアウト: 古いユーザー設定
+# RUN useradd -m -s /bin/bash -u $USER_ID $USER_NAME && \
+#     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# 追加: ユーザー設定と権限修正
+RUN useradd -m -s /bin/bash -u $USER_ID $USER_NAME && \
+    usermod -aG sudo $USER_NAME && \
+    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# 権限を適切に設定
+RUN chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
+
+# デフォルトのユーザー切り替え
+USER $USER_NAME
+WORKDIR /home/$USER_NAME
+
+# デフォルトのコマンドとしてbashを起動
+CMD ["/bin/bash"]
