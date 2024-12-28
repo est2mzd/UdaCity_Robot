@@ -10,7 +10,6 @@ source devel/setup.bash
 # .bashrc に追記した
 # export LIBGL_ALWAYS_SOFTWARE=1 
 
-
 roslaunch turtlebot_gazebo turtlebot_world.launch
 
 # OpenGLの競合回避策

@@ -168,7 +168,7 @@ RUN apt-get update && apt-get install -y \
 
 # Configure X server environment variables
 ENV DISPLAY=:0
-
+ENV TURTLEBOT_GAZEBO_WORLD_FILE=/opt/ros/kinetic/share/turtlebot_gazebo/worlds/playground.world
 
 
 #===================================================================#
